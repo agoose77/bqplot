@@ -1790,3 +1790,12 @@ class Image(Mark):
         'x': {'orientation': 'horizontal', 'dimension': 'x'},
         'y': {'orientation': 'vertical', 'dimension': 'y'},
     }).tag(sync=True)
+
+    def __init__(self, **kwargs):
+        super(Image, self).__init__(**kwargs)
+
+        self._hover_move_handlers = CallbackDispatcher()
+        self._name_to_handler['hover_move'] = self._hover_move_handlers
+
+    def on_hover_move(self, callback, remove=False):
+        self._hover_move_handlers.register_callback(callback, remove=remove)
