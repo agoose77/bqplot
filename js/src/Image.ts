@@ -30,7 +30,9 @@ export class Image extends Mark {
             .attr("width", 1)
             .attr("height", 1)
             .attr("preserveAspectRatio", "none")
-            .classed("image_pixelated", this.model.get('pixelated'));
+            .classed("image_pixelated", this.model.get('pixelated'))
+            .data([{}]);
+        this.display_el_classes=  ["image_pixelated"];
         this.update_image();
 
         this.event_metadata = {
@@ -53,7 +55,10 @@ export class Image extends Mark {
                 "hit_test": false
             }
         };
-
+        this.displayed.then(function() {
+            that.parent.tooltip_div.node().appendChild(that.tooltip_div.node());
+            that.create_tooltip();
+        });
         const that = this;
         return base_render_promise.then(function() {
             that.event_listeners = {};
@@ -94,6 +99,11 @@ export class Image extends Mark {
 
     create_listeners() {
         super.create_listeners();
+        this.d3el.on("mouseover", _.bind(function() { this.event_dispatcher("mouse_over"); }, this))
+            .on("mousemove", _.bind(function() { this.event_dispatcher("mouse_move"); }, this))
+            .on("mouseout", _.bind(function() { this.event_dispatcher("mouse_out"); }, this))
+            .on("click", _.bind(function(d, i) {this.img_send_message("element_clicked", {"data": d3.event, "index": i});
+        }, this));
         this.listenTo(this.model, "change:image", this.update_image);
         this.listenTo(this.model, "data_updated", function() {
             //animate on data update
@@ -147,7 +157,7 @@ export class Image extends Mark {
     }
 
     draw(animate?) {
-        this.set_ranges()
+        this.set_ranges();
 
         const x_scale = this.scales.x ? this.scales.x : this.parent.scale_x;
         const y_scale = this.scales.y ? this.scales.y : this.parent.scale_y;
@@ -165,10 +175,6 @@ export class Image extends Mark {
                 const sx = x_scaled[1] - x_scaled[0];
                 const sy = y_scaled[0] - y_scaled[1];
                 return "translate(" + tx + "," + ty + ") scale(" + sx + ", " + sy + ")"});
-        el.on("click", _.bind(function(d, i) {
-            this.img_send_message("element_clicked",
-                  {"data": d3.event, "index": i});
-        }, this));
     }
 
     clear_style(style_dict, indices?, elements?) {

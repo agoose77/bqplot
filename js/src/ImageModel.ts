@@ -29,8 +29,12 @@ export class ImageModel extends MarkModel {
             scales_metadata: {
                 'x': {'orientation': 'horizontal', 'dimension': 'x'},
                 'y': {'orientation': 'vertical', 'dimension': 'y'},
-            },
+            }
         };
+    }
+
+    get_data_dict(data, index){
+        return data;
     }
 
     initialize(attributes, options) {
