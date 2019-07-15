@@ -19,6 +19,18 @@ import { Mark }from './Mark';
 import * as _ from 'underscore';
 
 
+function throttle(func: any, rate: number) {
+    let throttling = false;
+    return function (){
+        const ctx = this;
+        const args = arguments;
+        if (!throttling) {
+            throttling = true;
+            setTimeout(() => {throttling=false; func.apply(ctx, args)}, 1000 / rate);
+        }
+    }
+}
+
 export class Image extends Mark {
 
     render() {
@@ -34,6 +46,7 @@ export class Image extends Mark {
             .data([{}]);
         this.display_el_classes=  ["image_pixelated"];
         this.update_image();
+        this.send_throttled = null;
 
         this.event_metadata = {
             "mouse_over": {
@@ -106,6 +119,9 @@ export class Image extends Mark {
             .on("mouseout", _.bind(function() { this.event_dispatcher("mouse_out"); }, this))
             .on("click", _.bind(function(d, i) {this.img_send_message("element_clicked", {"data": d3.event, "index": i});
         }, this));
+        this.listenTo(this.model, "change:hover_move_rate_limit", () => {
+            this.send_throttled = throttle(this.send.bind(this), this.model.get("hover_move_rate_limit"));
+        });
         this.listenTo(this.model, "change:image", this.update_image);
         this.listenTo(this.model, "change:tooltip", this.create_tooltip);
         this.listenTo(this.model, "change:interactions", this.process_interactions);
@@ -137,6 +153,24 @@ export class Image extends Mark {
 
     relayout() {
         this.draw(true);
+    }
+
+    custom_msg_sender(event_name) {
+        if (event_name === "mouse_move") {
+            // Create this bad boi
+            if (this.send_throttled === null){
+                this.send_throttled = throttle(this.send.bind(this), this.model.get("hover_move_rate_limit"));
+            }
+            this.send_throttled({
+                event: 'hover_move', data: {
+                    x: this.scales.x.invert(d3.mouse(this.el)[0]),
+                    y: this.scales.y.invert(d3.mouse(this.el)[1])
+                }
+            });
+        }
+        else {
+            super.custom_msg_sender(event_name);
+        }
     }
 
     img_send_message(event_name, data) {
@@ -194,4 +228,5 @@ export class Image extends Mark {
     }
     
     im: any;
+    send_throttled: any = null;
 }
