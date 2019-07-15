@@ -1,0 +1,4 @@
+[submodule "theme-darcula"]
+	path = theme-darcula
+	url = git@github.com:telamonian/theme-darcula.git
+	branch = jlab-1.0

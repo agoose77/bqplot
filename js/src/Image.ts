@@ -55,14 +55,16 @@ export class Image extends Mark {
                 "hit_test": false
             }
         };
+        const that = this;
+
         this.displayed.then(function() {
             that.parent.tooltip_div.node().appendChild(that.tooltip_div.node());
             that.create_tooltip();
         });
-        const that = this;
+
         return base_render_promise.then(function() {
             that.event_listeners = {};
-            that.reset_click();
+            that.process_interactions();
             that.create_listeners();
             that.listenTo(that.parent, "margin_updated", function() {
                 that.draw(false);
@@ -105,6 +107,9 @@ export class Image extends Mark {
             .on("click", _.bind(function(d, i) {this.img_send_message("element_clicked", {"data": d3.event, "index": i});
         }, this));
         this.listenTo(this.model, "change:image", this.update_image);
+        this.listenTo(this.model, "change:tooltip", this.create_tooltip);
+        this.listenTo(this.model, "change:interactions", this.process_interactions);
+        this.listenTo(this.model, "change:enable_hover", () => { this.hide_tooltip(); });
         this.listenTo(this.model, "data_updated", function() {
             //animate on data update
             const animate = true;
@@ -152,7 +157,6 @@ export class Image extends Mark {
         // for (var datum in data.data) {
         //     data_message[datum] = data.data[datum];
         // }
-        ;
         this.send({event: event_data.msg_name, data: data_message});
     }
 
